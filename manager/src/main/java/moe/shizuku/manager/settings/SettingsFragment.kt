@@ -118,11 +118,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
         }
 
         startOnBootPreference.apply {
-            if (
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ||
-                EnvironmentUtils.isTelevision() ||
-                EnvironmentUtils.isRooted()
-            ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.isRooted()) {
                 isChecked = ShizukuSettings.getStartOnBoot(context)
 
                 setOnPreferenceChangeListener { _, newValue ->
@@ -137,11 +133,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
                         }
 
                         // https://r.android.com/2128832
-                        if (
-                            newValue &&
-                            !EnvironmentUtils.isTelevision() &&
-                            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                        ) {
+                        if (newValue && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                             MaterialAlertDialogBuilder(context)
                                 .setTitle(android.R.string.dialog_alert_title)
                                 .setMessage(R.string.settings_start_on_boot_bug)

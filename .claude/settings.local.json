@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"exit: $?\")",
+      "Bash(git clone https://github.com/thedjchi/Shizuku-API \"D:/test/Shizuku-13.6.0.r1349-thedjchi-beta/api/\")",
+      "Bash(java -version)",
+      "Bash(cmake --version)",
+      "Bash(ninja --version)",
+      "Bash(\"C:/Users/Ricky/AppData/Local/Android/Sdk/cmdline-tools/latest/bin/sdkmanager.bat\" \"cmake;3.28.0.2246989\")",
+      "Bash(winget install Ninja-build.Ninja --accept-source-agreements --accept-package-agreements)",
+      "Bash(cmd /c \"ninja --version\")",
+      "Bash(export PATH=\"$PATH:/c/Users/Ricky/AppData/Local/Microsoft/WinGet/Links\")",
+      "Bash(./gradlew.bat assembleRelease)",
+      "Bash(grep -r \"cmake.dir\\\\|D:\\\\\\\\Sym\" \"D:/test/Shizuku-13.6.0.r1349-thedjchi-beta/\" --include=\"*.properties\")",
+      "Bash(cmd //c \"where cmake\")",
+      "Bash(xargs grep -l \"Sym\")",
+      "Bash(./gradlew.bat --stop)",
+      "Bash(winget install EclipseAdoptium.Temurin.21.JDK --accept-source-agreements --accept-package-agreements)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\")"
+    ]
+  }
+}

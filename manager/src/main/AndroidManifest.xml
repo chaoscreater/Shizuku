@@ -219,6 +219,17 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".receiver.WatchdogToggleReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.WATCHDOG_TOGGLE" />
+                <action android:name="${applicationId}.WATCHDOG_ON" />
+                <action android:name="${applicationId}.WATCHDOG_OFF" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".receiver.NotifAttemptReceiver" />
         <receiver android:name=".receiver.NotifCancelReceiver" />
         <receiver android:name=".receiver.NotifRestoreReceiver" />
