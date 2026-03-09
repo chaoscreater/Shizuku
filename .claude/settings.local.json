@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone https://github.com/thedjchi/Shizuku-API \"D:/test/Shizuku-13.6.0.r1349-thedjchi-beta/api/\")",
+      "Bash(xargs grep -l \"developer\")"
+    ]
+  }
+}
