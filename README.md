@@ -1,5 +1,3 @@
-<div align="center">
-   
 # Shizuku
 
 An Android app that allows other apps to use system-level APIs that require ADB/root privileges.
