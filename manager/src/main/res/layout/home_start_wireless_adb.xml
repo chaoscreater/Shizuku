@@ -57,7 +57,13 @@
         style="@style/CardButton"
         android:text="@string/home_root_button_start"
         app:icon="@drawable/ic_server_start_24dp" />
-        
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_developer_settings"
+        style="@style/CardButton"
+        android:text="@string/development_settings"
+        app:icon="@drawable/ic_settings_outline_24dp" />
+
     </LinearLayout>
 
 </LinearLayout>

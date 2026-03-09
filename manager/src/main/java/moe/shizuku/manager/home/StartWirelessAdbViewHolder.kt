@@ -31,6 +31,7 @@ import moe.shizuku.manager.receiver.NotifCancelReceiver
 import moe.shizuku.manager.starter.StarterActivity
 import moe.shizuku.manager.utils.CustomTabsHelper
 import moe.shizuku.manager.utils.EnvironmentUtils
+import moe.shizuku.manager.utils.SettingsPage
 import moe.shizuku.manager.utils.ShizukuStateMachine
 import rikka.core.content.asActivity
 import rikka.html.text.HtmlCompat
@@ -106,6 +107,9 @@ class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: Vie
             binding.button2.setOnClickListener { v: View ->
                 onPairClicked(v.context)
             }
+            binding.buttonDeveloperSettings.setOnClickListener { v: View ->
+                SettingsPage.Developer.HighlightWirelessDebugging.launch(v.context)
+            }
             binding.text1.movementMethod = LinkMovementMethod.getInstance()
             binding.text1.text = context.getString(R.string.home_wireless_adb_description)
                 .toHtml(HtmlCompat.FROM_HTML_OPTION_TRIM_WHITESPACE)
@@ -114,6 +118,7 @@ class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: Vie
                 .toHtml(HtmlCompat.FROM_HTML_OPTION_TRIM_WHITESPACE)
             binding.button2.isVisible = false
             binding.button3.isVisible = false
+            binding.buttonDeveloperSettings.isVisible = false
         }
     }
 
