@@ -15,9 +15,8 @@ Note that I'm not a developer. I modified it using Claude. The 2 new features I'
 - You can now toggle Watchdog service setting via intent. Useful in certain situations.
 
 ### Download
+You'll have to uninstall any previous Shizuku version before you install this one.
 https://github.com/chaoscreater/Shizuku/blob/master/shizuku-v13.6.0.r1349-thedjchi-release.apk
-
-All versions are distributed via [GitHub Releases](https://github.com/thedjchi/Shizuku/releases).
 
 <br>
 <br>
