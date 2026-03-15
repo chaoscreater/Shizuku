@@ -8,13 +8,21 @@ This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the ori
 
 Note that I'm not a developer. I modified it using Claude. The 2 new features I've added are:
 
-- Allows Shizuku service to start without having USB Debugging on AND without wifi connected to any network. It just needs wireless debugging on, which you can force using a workaround method (https://github.com/thedjchi/Shizuku/issues/165). What does this mean? It means on a non-rooted phone, if you restarted your phone and you can't find any Wifi SSIDs to connect to, or you just can't connect to a network for whatever reason, you can still start Shizuku AND without having to use USB Debugging, without tethering to any PC. It also means you can have USB Debugging off (for some apps, this is required in order to run), while still able to use apps that rely on Shizuku - for example Hail for enabling/disabling apps. For a demo of this, see the recording below:
+- You can now toggle Watchdog service setting via intent. Useful in certain situations.
+- Allows Shizuku service to start without having USB Debugging on AND without wifi connected to any network. It just needs wireless debugging on, which you can force using a workaround method (https://github.com/thedjchi/Shizuku/issues/165). What does this mean? It means on a non-rooted phone, if you restarted your phone and you can't find any Wifi SSIDs to connect to, or you just can't connect to a network for whatever reason, you can still start Shizuku AND without having to use USB Debugging, without tethering to any PC. It also means you can have USB Debugging off (for some apps, this is required in order to run), while still able to use apps that rely on Shizuku - for example Hail for enabling/disabling apps. 
+
+This also means that if you have apps that can't run if USB Debugging is enabled (e.g. Microsoft Teams, which rely on Company Portal, which checks your device for root and whether you have USB Debugging enabled), you can now run those apps. At the same time, you can run Shizuku related apps (e.g. you can use Hail with Shizuku to enable/disable apps). Both these situations can happen concurrently, which is great.
+
+<br>
+<br>
+
+For a demo of this, see the recording below:
 
 https://github.com/user-attachments/assets/9a1b6cc1-d660-447b-bd36-5842e691d7fd
 
 https://github.com/user-attachments/assets/58c64ee2-05b7-4790-a353-0135d16fb63a
 
-- You can now toggle Watchdog service setting via intent. Useful in certain situations.
+<br>
 
 ### Download
 You'll have to uninstall any previous Shizuku version before you install this one.

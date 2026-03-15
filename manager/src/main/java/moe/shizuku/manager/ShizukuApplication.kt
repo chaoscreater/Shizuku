@@ -3,6 +3,7 @@ package moe.shizuku.manager
 import android.app.Application
 import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.topjohnwu.superuser.Shell
@@ -42,7 +43,15 @@ class ShizukuApplication : Application() {
         LocaleDelegate.defaultLocale = ShizukuSettings.getLocale()
         AppCompatDelegate.setDefaultNightMode(ShizukuSettings.getNightMode())
 
-        if(ShizukuSettings.getWatchdog()) WatchdogService.start(context)
+        val watchdogEnabled = ShizukuSettings.getWatchdog()
+        if (watchdogEnabled) WatchdogService.start(context)
+        try {
+            Settings.Global.putInt(
+                context.contentResolver,
+                ShizukuSettings.GLOBAL_KEY_WATCHDOG,
+                if (watchdogEnabled) 1 else 0
+            )
+        } catch (_: Exception) {}
     }
 
     override fun onCreate() {

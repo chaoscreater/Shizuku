@@ -6,6 +6,7 @@ import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.provider.Settings;
 import android.text.TextUtils;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -142,6 +143,8 @@ public class ShizukuSettings {
         return WatchdogService.isRunning();
     }
 
+    public static final String GLOBAL_KEY_WATCHDOG = "shizuku_watchdog";
+
     public static void setWatchdog(Context context, boolean enable) {
         if (enable) {
             WatchdogService.start(context);
@@ -149,7 +152,9 @@ public class ShizukuSettings {
             WatchdogService.stop(context);
         }
         getPreferences().edit().putBoolean(Keys.KEY_WATCHDOG, enable).apply();
-        return;
+        try {
+            Settings.Global.putInt(context.getContentResolver(), GLOBAL_KEY_WATCHDOG, enable ? 1 : 0);
+        } catch (Exception ignored) {}
     }
 
     public static boolean getTcpMode() {

@@ -230,6 +230,15 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".receiver.WatchdogStatusReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.WATCHDOG_STATUS" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".receiver.NotifAttemptReceiver" />
         <receiver android:name=".receiver.NotifCancelReceiver" />
         <receiver android:name=".receiver.NotifRestoreReceiver" />
