@@ -11,7 +11,6 @@ Note that I'm not a developer. I modified it using Claude. The new features I've
 - You can now toggle Watchdog service setting via intent. Useful in certain situations.
 - You can use MacroDroid's receive intent trigger to detect Watchdog's on/off status. Whenever the status is changed, MacroDroid can act on this.
 
-<br>
 Action: moe.shizuku.privileged.api.WATCHDOG_CHANGED 
 <br>
 extra name: status 
@@ -19,6 +18,7 @@ extra name: status
 extra value: *
 
 https://imgur.com/3ialiio
+<br>
 
 - Allows Shizuku service to start without having USB Debugging on AND without wifi connected to any network. It just needs wireless debugging on, which you can force using a workaround method (https://github.com/thedjchi/Shizuku/issues/165). What does this mean? It means on a non-rooted phone, if you restarted your phone and you can't find any Wifi SSIDs to connect to, or you just can't connect to a network for whatever reason, you can still start Shizuku AND without having to use USB Debugging, without tethering to any PC. It also means you can have USB Debugging off (for some apps, this is required in order to run), while still able to use apps that rely on Shizuku - for example Hail for enabling/disabling apps. 
 
