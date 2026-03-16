@@ -27,7 +27,7 @@ class WatchdogService : Service() {
     private val stateListener: (ShizukuStateMachine.State) -> Unit = {
         if (it == ShizukuStateMachine.State.CRASHED) {
             showCrashNotification()
-            ShizukuReceiverStarter.start(applicationContext)
+            ShizukuReceiverStarter.start(applicationContext, enableWirelessDebugging = false)
         }
     }
 

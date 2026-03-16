@@ -1,6 +1,7 @@
 package moe.shizuku.manager.utils
 
 import android.Manifest.permission.WRITE_SECURE_SETTINGS
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.util.Log
@@ -39,7 +40,20 @@ object ShizukuStateMachine {
         if(oldState != newState) {
             listeners.forEach { it(newState) }
             Log.d("ShizukuStateMachine", newState.toString())
+            when (newState) {
+                State.RUNNING, State.STOPPED, State.CRASHED -> sendShizukuChangedBroadcast(newState)
+                else -> Unit
+            }
         }
+    }
+
+    private fun sendShizukuChangedBroadcast(newState: State) {
+        val status = if (newState == State.RUNNING) 1 else 0
+        val intent = Intent("${appContext.packageName}.SHIZUKU_CHANGED").apply {
+            putExtra("status", status)
+            addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+        }
+        appContext.sendBroadcast(intent)
     }
 
     fun set(newState: State) = transition { newState }

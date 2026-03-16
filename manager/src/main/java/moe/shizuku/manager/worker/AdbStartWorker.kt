@@ -49,6 +49,7 @@ class AdbStartWorker(context: Context, params: WorkerParameters) : CoroutineWork
             )
 
             val cr = applicationContext.contentResolver
+            val enableWirelessDebugging = inputData.getBoolean(KEY_ENABLE_WIFI, true)
 
             Settings.Global.putInt(cr, Settings.Global.ADB_ENABLED, 1)
             Settings.Global.putLong(cr, "adb_allowed_connection_time", 0L)
@@ -95,7 +96,9 @@ class AdbStartWorker(context: Context, params: WorkerParameters) : CoroutineWork
                                 if (intent.action == Intent.ACTION_USER_PRESENT) {
                                     context.unregisterReceiver(this)
                                     unlockReceiver = null
-                                    Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
+                                    if (enableWirelessDebugging) {
+                                        Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
+                                    }
                                 }
                             }
                         }
@@ -116,7 +119,9 @@ class AdbStartWorker(context: Context, params: WorkerParameters) : CoroutineWork
                     }
                 }
 
-                Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
+                if (enableWirelessDebugging) {
+                    Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
+                }
                 cr.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, observer)
                 startDiscoveryWithTimeout()
 
@@ -202,14 +207,19 @@ class AdbStartWorker(context: Context, params: WorkerParameters) : CoroutineWork
     }
 
     companion object {
-        fun enqueue(context: Context) {
+        const val KEY_ENABLE_WIFI = "enable_wifi"
+
+        fun enqueue(context: Context, enableWirelessDebugging: Boolean = true) {
             val cb = Constraints.Builder()
             if (EnvironmentUtils.isWifiRequired())
                 cb.setRequiredNetworkType(NetworkType.UNMETERED)
             val constraints = cb.build()
 
+            val inputData = workDataOf(KEY_ENABLE_WIFI to enableWirelessDebugging)
+
             val request = OneTimeWorkRequestBuilder<AdbStartWorker>()
                 .setConstraints(constraints)
+                .setInputData(inputData)
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
