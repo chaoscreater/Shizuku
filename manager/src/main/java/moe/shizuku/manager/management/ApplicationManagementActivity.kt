@@ -2,20 +2,19 @@ package moe.shizuku.manager.management
 
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView.AdapterDataObserver
-import moe.shizuku.manager.Helps
 import moe.shizuku.manager.R
 import moe.shizuku.manager.app.AppBarActivity
 import moe.shizuku.manager.databinding.AppsActivityBinding
-import moe.shizuku.manager.utils.CustomTabsHelper
 import moe.shizuku.manager.utils.ShizukuStateMachine
 import rikka.lifecycle.Status
 import rikka.recyclerview.addEdgeSpacing
 import rikka.recyclerview.fixEdgeEffect
-import rikka.shizuku.Shizuku
 import java.util.*
 
 class ApplicationManagementActivity : AppBarActivity() {
@@ -69,6 +68,10 @@ class ApplicationManagementActivity : AppBarActivity() {
             }
         })
 
+        binding.searchInput.addTextChangedListener { editable ->
+            viewModel.setSearchQuery(editable?.toString() ?: "")
+        }
+
         ShizukuStateMachine.addListener(stateListener)
     }
 
@@ -80,5 +83,21 @@ class ApplicationManagementActivity : AppBarActivity() {
     override fun onResume() {
         super.onResume()
         adapter.notifyDataSetChanged()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.apps_management, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val sortOrder = when (item.itemId) {
+            R.id.action_sort_last_added -> SortOrder.LAST_ADDED
+            R.id.action_sort_alphabetical -> SortOrder.ALPHABETICAL
+            else -> return super.onOptionsItemSelected(item)
+        }
+        item.isChecked = true
+        viewModel.setSortOrder(sortOrder)
+        return true
     }
 }

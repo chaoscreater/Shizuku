@@ -104,6 +104,10 @@
     <string name="app_management_dialog_adb_is_limited_message"><![CDATA[It\'s highly possible that your device manufacturer limits the permission of adb.<p>There may be a solution for your system in <b><a href=\"%1$s\">this document</a></b>.]]></string>
     <string name="app_management_item_summary_requires_root">* requires Shizuku runs with root</string>
     <string name="app_management_toggle_all">Toggle all</string>
+    <string name="app_management_search_hint">Search apps</string>
+    <string name="app_management_sort">Sort</string>
+    <string name="app_management_sort_last_added">Last added</string>
+    <string name="app_management_sort_alphabetical">Alphabetical</string>
 
     <!-- Terminal -->
     <string name="home_terminal_title">Use Shizuku in terminal apps</string>

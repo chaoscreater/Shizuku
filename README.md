@@ -8,7 +8,18 @@ This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the ori
 
 Note that I'm not a developer. I modified it using Claude. The new features I've added are:
 
+- You can now sort the authorized apps by recently added or alphabetically. You can also search for an app now. Useful if you have 60+ apps that you need to go through for whatever reason.
 - You can now toggle Watchdog service setting via intent. Useful in certain situations.
+- You can use MacroDroid's receive intent trigger to detect Shizuku's on/off status. Whenever the status is changed, MacroDroid can act on this.
+
+Action: moe.shizuku.manager.SHIZUKU_CHANGED
+<br>
+extra name: status 
+<br>
+extra value: *
+
+<br>
+
 - You can use MacroDroid's receive intent trigger to detect Watchdog's on/off status. Whenever the status is changed, MacroDroid can act on this.
 
 Action: moe.shizuku.privileged.api.WATCHDOG_CHANGED 
