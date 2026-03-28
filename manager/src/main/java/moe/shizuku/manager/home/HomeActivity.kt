@@ -30,7 +30,9 @@ import moe.shizuku.manager.settings.SettingsActivity
 import moe.shizuku.manager.utils.AppIconCache
 import moe.shizuku.manager.utils.EnvironmentUtils
 import moe.shizuku.manager.utils.SettingsHelper
+import moe.shizuku.manager.service.WatchdogService
 import moe.shizuku.manager.utils.ShizukuStateMachine
+import androidx.work.WorkManager
 import rikka.core.content.asActivity
 import rikka.core.ktx.unsafeLazy
 import rikka.lifecycle.Status
@@ -176,16 +178,23 @@ abstract class HomeActivity : AppBarActivity() {
                 true
             }
             R.id.action_stop -> {
-                if (ShizukuStateMachine.isRunning()) {
-                    MaterialAlertDialogBuilder(this)
-                        .setMessage(R.string.dialog_stop_message)
-                        .setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
+                MaterialAlertDialogBuilder(this)
+                    .setMessage(R.string.dialog_stop_message)
+                    .setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
+                        // Stop watchdog first so it doesn't immediately restart the server
+                        WatchdogService.stop(this)
+                        // Cancel any pending AdbStartWorker
+                        WorkManager.getInstance(this).cancelUniqueWork("adb_start_worker")
+                        // Stop the server if it's running
+                        if (ShizukuStateMachine.isRunning()) {
                             ShizukuStateMachine.set(ShizukuStateMachine.State.STOPPING)
                             runCatching { Shizuku.exit() }
+                        } else {
+                            ShizukuStateMachine.set(ShizukuStateMachine.State.STOPPED)
                         }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show()
-                }
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
                 true
             }
             R.id.action_settings -> {

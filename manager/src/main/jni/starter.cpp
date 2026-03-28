@@ -113,6 +113,112 @@ v_current = (uintptr_t) v + v_size - sizeof(char *); \
     }
 }
 
+// Find the cgroupv2 mount point by scanning /proc/mounts.
+// Returns true and fills mount_point (up to len bytes) on success.
+static bool find_cgroup2_mount(char *mount_point, size_t len) {
+    FILE *f = fopen("/proc/mounts", "r");
+    if (!f) return false;
+    char line[512];
+    bool found = false;
+    while (fgets(line, sizeof(line), f)) {
+        // Format: device mountpoint fstype options dump pass
+        char dev[128], mp[256], fstype[64];
+        if (sscanf(line, "%127s %255s %63s", dev, mp, fstype) == 3) {
+            if (strcmp(fstype, "cgroup2") == 0) {
+                strncpy(mount_point, mp, len - 1);
+                mount_point[len - 1] = '\0';
+                found = true;
+                break;
+            }
+        }
+    }
+    fclose(f);
+    return found;
+}
+
+// Try to escape the current cgroupv2 pid-level cgroup (e.g. /system/uid_0/pid_30311
+// which is adbd's own cgroup). When adbd is restarted by the USB stack on screen-off,
+// killProcessGroup kills everything in that cgroup — including the Shizuku server.
+//
+// Strategy:
+//   1. Read /proc/self/cgroup to find the v2 path and discover the real mount point.
+//   2. Strip the pid_XXXXX leaf to get the uid-level parent path.
+//   3. Try writing directly to the parent (succeeds if it happens to be a leaf).
+//   4. If that fails (no-internal-process rule), mkdir a dedicated "shizuku" leaf
+//      under the parent and move there.
+static int try_escape_v2_cgroup(int pid) {
+    // Find cgroupv2 mount point dynamically instead of assuming /sys/fs/cgroup
+    char cg2_root[256] = "/sys/fs/cgroup"; // sensible default
+    find_cgroup2_mount(cg2_root, sizeof(cg2_root));
+    printf("info: cgroupv2 mount point: %s\n", cg2_root);
+    fflush(stdout);
+
+    FILE *f = fopen("/proc/self/cgroup", "r");
+    if (!f) {
+        printf("warn: can't open /proc/self/cgroup: %s\n", strerror(errno));
+        return -1;
+    }
+
+    char line[512];
+    char v2_path[512] = {0};
+    while (fgets(line, sizeof(line), f)) {
+        if (strncmp(line, "0::", 3) == 0) {
+            char *path_start = line + 3;
+            char *nl = strchr(path_start, '\n');
+            if (nl) *nl = '\0';
+            strncpy(v2_path, path_start, sizeof(v2_path) - 1);
+            break;
+        }
+    }
+    fclose(f);
+
+    if (v2_path[0] == '\0') {
+        printf("warn: no cgroupv2 entry in /proc/self/cgroup\n");
+        return -1;
+    }
+    printf("info: current cgroupv2 path: %s\n", v2_path);
+    fflush(stdout);
+
+    // Strip the pid_XXXXX leaf: /system/uid_0/pid_30311 -> /system/uid_0
+    char *last_slash = strrchr(v2_path, '/');
+    if (!last_slash || last_slash == v2_path) {
+        printf("warn: cgroupv2 path too shallow to escape: %s\n", v2_path);
+        return -1;
+    }
+    *last_slash = '\0';
+
+    char parent_path[600];
+    snprintf(parent_path, sizeof(parent_path), "%s%s", cg2_root, v2_path);
+    printf("info: attempting cgroupv2 escape to parent: %s\n", parent_path);
+    fflush(stdout);
+
+    // Try moving directly to the uid-level parent
+    if (cgroup::switch_cgroup(parent_path, pid)) {
+        printf("info: cgroupv2 escape succeeded (parent): %s\n", parent_path);
+        fflush(stdout);
+        return 0;
+    }
+    printf("info: parent write failed (likely no-internal-process), trying mkdir shizuku leaf\n");
+    fflush(stdout);
+
+    // Parent is non-leaf — create a dedicated "shizuku" leaf cgroup and move there
+    char shizuku_path[640];
+    snprintf(shizuku_path, sizeof(shizuku_path), "%s/shizuku", parent_path);
+    if (mkdir(shizuku_path, 0755) != 0 && errno != EEXIST) {
+        printf("warn: mkdir %s failed: %s\n", shizuku_path, strerror(errno));
+        fflush(stdout);
+        // Don't return yet — the dir might already exist from a previous run
+    }
+    if (cgroup::switch_cgroup(shizuku_path, pid)) {
+        printf("info: cgroupv2 escape succeeded (shizuku leaf): %s\n", shizuku_path);
+        fflush(stdout);
+        return 0;
+    }
+    printf("warn: cgroupv2 escape failed entirely for pid %d\n", pid);
+    fflush(stdout);
+    return -1;
+}
+
 static void start_server(const char *path, const char *main_class, const char *process_name) {
     int fds[2];
     if (pipe(fds) < 0) {
@@ -131,6 +237,12 @@ static void start_server(const char *path, const char *main_class, const char *p
             close(fds[0]);
             setsid();
             chdir("/");
+
+            // Escape adbd's cgroupv2 using the child's own PID.
+            // This must happen before stdio is redirected to /dev/null so
+            // the debug output is still visible in the parent's terminal.
+            try_escape_v2_cgroup(getpid());
+
             int fd = open("/dev/null", O_RDWR);
             if (fd != -1) {
                 dup2(fd, STDIN_FILENO);
@@ -138,7 +250,7 @@ static void start_server(const char *path, const char *main_class, const char *p
                 dup2(fd, STDERR_FILENO);
                 if (fd > 2) close(fd);
             }
-            
+
             char ready = 1;
             write(fds[1], &ready, 1);
             close(fds[1]);
@@ -175,16 +287,35 @@ static int switch_cgroup() {
     int pid = getpid();
     if (cgroup::switch_cgroup("/acct", pid)) {
         printf("info: switch cgroup succeeded, cgroup in /acct\n");
+        // Also escape cgroupv2 since /acct only covers cgroupv1
+        try_escape_v2_cgroup(pid);
         return 0;
     }
     if (cgroup::switch_cgroup("/dev/cg2_bpf", pid)) {
         printf("info: switch cgroup succeeded, cgroup in /dev/cg2_bpf\n");
+        try_escape_v2_cgroup(pid);
         return 0;
     }
     if (cgroup::switch_cgroup("/sys/fs/cgroup", pid)) {
         printf("info: switch cgroup succeeded, cgroup in /sys/fs/cgroup\n");
         return 0;
     }
+
+    // Root-level v2 failed (no internal process rule). Try the dynamic v2 escape.
+    if (try_escape_v2_cgroup(pid) == 0) {
+        return 0;
+    }
+
+    // Also try uid-level v1 paths for uid=2000/shell
+    uid_t uid = getuid();
+    char uid_path[256];
+
+    snprintf(uid_path, sizeof(uid_path), "/acct/uid_%d", uid);
+    if (cgroup::switch_cgroup(uid_path, pid)) {
+        printf("info: switch cgroup succeeded, cgroup in /acct/uid_%d\n", uid);
+        return 0;
+    }
+
     char buf[PROP_VALUE_MAX + 1];
     if (__system_property_get("ro.config.per_app_memcg", buf) > 0 &&
         strncmp(buf, "false", 5) != 0) {
@@ -214,9 +345,9 @@ int main(int argc, char *argv[]) {
 
     se::init();
 
-    if (uid == 0) {
-        switch_cgroup();
+    switch_cgroup();
 
+    if (uid == 0) {
         if (android_get_device_api_level() >= 29) {
             printf("info: switching mount namespace to init...\n");
             switch_mnt_ns(1);

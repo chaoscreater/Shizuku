@@ -8,6 +8,7 @@ This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the ori
 
 Note that I'm not a developer. I modified it using Claude. The new features I've added are:
 
+- There's a weird bug or quirk with Shizuku on some Chinese devices like Xiaomi, Oppo or Lenovo (probably others as well) - where Shizuku dies when your USB protocol is File Transfer and you turn off the screen. The workaround is to set your USB protocol to charge only, but that's not ideal as it means you'd have to constantly toggle between the 2 just to get Shizuku to work well, or you'd have to setup some sort of automation with Macrodroid/Tasker to fix this. This issue should now be fixed, at least on my Lenovo tablet and Oppo phone.
 - You can now sort the authorized apps by recently added or alphabetically. You can also search for an app now. Useful if you have 60+ apps that you need to go through for whatever reason.
 - You can now toggle Watchdog service setting via intent. Useful in certain situations.
 - You can use MacroDroid's receive intent trigger to detect Shizuku's on/off status. Whenever the status is changed, MacroDroid can act on this.
