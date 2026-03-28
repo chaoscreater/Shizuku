@@ -181,7 +181,7 @@ abstract class HomeActivity : AppBarActivity() {
                 MaterialAlertDialogBuilder(this)
                     .setMessage(R.string.dialog_stop_message)
                     .setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
-                        // Stop watchdog first so it doesn't immediately restart the server
+                        // Stop watchdog temporarily so it doesn't immediately restart the server
                         WatchdogService.stop(this)
                         // Cancel any pending AdbStartWorker
                         WorkManager.getInstance(this).cancelUniqueWork("adb_start_worker")
@@ -191,6 +191,10 @@ abstract class HomeActivity : AppBarActivity() {
                             runCatching { Shizuku.exit() }
                         } else {
                             ShizukuStateMachine.set(ShizukuStateMachine.State.STOPPED)
+                        }
+                        // Re-start watchdog if the user had it enabled, so it monitors future starts
+                        if (ShizukuSettings.getWatchdog()) {
+                            WatchdogService.start(this)
                         }
                     }
                     .setNegativeButton(android.R.string.cancel, null)

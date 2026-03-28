@@ -5,8 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
@@ -14,20 +16,82 @@ import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.WorkManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import moe.shizuku.manager.R
 import moe.shizuku.manager.MainActivity
 import moe.shizuku.manager.ShizukuSettings
+import moe.shizuku.manager.adb.AdbStarter
 import moe.shizuku.manager.receiver.ShizukuReceiverStarter
+import moe.shizuku.manager.starter.Starter
+import moe.shizuku.manager.utils.EnvironmentUtils
 import moe.shizuku.manager.utils.SettingsPage
 import moe.shizuku.manager.utils.ShizukuStateMachine
 import java.util.concurrent.atomic.AtomicBoolean
 
 class WatchdogService : Service() {
 
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var pendingRestart = false
+
     private val stateListener: (ShizukuStateMachine.State) -> Unit = {
-        if (it == ShizukuStateMachine.State.CRASHED) {
-            showCrashNotification()
-            ShizukuReceiverStarter.start(applicationContext, enableWirelessDebugging = false)
+        when (it) {
+            ShizukuStateMachine.State.CRASHED -> {
+                showCrashNotification()
+                attemptRestart()
+            }
+            ShizukuStateMachine.State.RUNNING -> {
+                // Server is back — no longer need screen-on retry
+                pendingRestart = false
+            }
+            else -> Unit
+        }
+    }
+
+    /**
+     * Screen-on receiver: when the user turns the screen on after a crash,
+     * trigger a fresh restart. This avoids the problem where crash-time restart
+     * attempts fail (mDNS / wireless debugging don't work with screen off) and
+     * WorkManager accumulates exponential backoff, making restart indefinitely slow.
+     */
+    private val screenOnReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Intent.ACTION_USER_PRESENT && pendingRestart) {
+                Log.d(TAG, "Screen unlocked with pending restart — retrying now")
+                attemptRestart()
+            }
+        }
+    }
+
+    private fun attemptRestart() {
+        // Cancel any prior WorkManager attempt so we don't inherit exponential backoff
+        WorkManager.getInstance(applicationContext).cancelUniqueWork("adb_start_worker")
+
+        serviceScope.launch {
+            try {
+                val tcpPort = EnvironmentUtils.getAdbTcpPort()
+                if (tcpPort > 0 && ShizukuSettings.getTcpMode()) {
+                    // Direct TCP restart — fastest path, no mDNS needed
+                    pendingRestart = false
+                    AdbStarter.startAdb(applicationContext, tcpPort)
+                    Starter.waitForBinder()
+                } else {
+                    // mDNS-based restart via WorkManager.
+                    // Enable wireless debugging so mDNS can discover a port.
+                    // Mark pending so screen-on receiver can retry if this attempt
+                    // fails (e.g. screen is still off).
+                    pendingRestart = true
+                    ShizukuReceiverStarter.start(applicationContext, enableWirelessDebugging = true)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Direct restart failed, falling back to WorkManager", e)
+                pendingRestart = true
+                ShizukuReceiverStarter.start(applicationContext, enableWirelessDebugging = true)
+            }
         }
     }
 
@@ -35,11 +99,23 @@ class WatchdogService : Service() {
         super.onCreate()
         isRunning.set(true)
         ShizukuStateMachine.addListener(stateListener)
+        registerReceiver(screenOnReceiver, IntentFilter(Intent.ACTION_USER_PRESENT))
         sendWatchdogChangedBroadcast(applicationContext, true)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "ACTION_STOP_SERVICE") {
+            // User explicitly turned off watchdog via notification — persist the setting
+            // Write directly to prefs+global instead of setWatchdog() to avoid
+            // redundant stop() call (we're already stopping via stopSelf below).
+            ShizukuSettings.getPreferences().edit()
+                .putBoolean(ShizukuSettings.Keys.KEY_WATCHDOG, false).apply()
+            try {
+                Settings.Global.putInt(
+                    applicationContext.contentResolver,
+                    ShizukuSettings.GLOBAL_KEY_WATCHDOG, 0
+                )
+            } catch (_: Exception) {}
             stopSelf()
             return START_NOT_STICKY
         }
@@ -59,10 +135,16 @@ class WatchdogService : Service() {
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
+        pendingRestart = false
         ShizukuStateMachine.removeListener(stateListener)
+        runCatching { unregisterReceiver(screenOnReceiver) }
         isRunning.set(false)
         sendWatchdogChangedBroadcast(applicationContext, false)
-        ShizukuSettings.setWatchdog(applicationContext, false)
+        // Do NOT persist watchdog=false here. This is called both when the user
+        // manually stops Shizuku (temporary) and when the notification stop button
+        // is used (permanent). Only the notification stop button (ACTION_STOP_SERVICE)
+        // and the settings toggle should persist the preference.
         super.onDestroy()
     }
 
