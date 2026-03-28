@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+vendor/
+
+# build output
+dist/
+build/
+.out/
+.grade/
+.kotlin/
+gradle/
+.github/
+
+# logs
+*.log
+
+# env files
+#.env
+#.env.*
+
+# binaries
+*.zip
+*.tar
+*.gz
+*.apk
+
+# IDE junk
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db

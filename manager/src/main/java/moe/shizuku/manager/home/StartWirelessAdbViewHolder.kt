@@ -52,8 +52,12 @@ class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: Vie
 
         fun start (context: Context, scope: CoroutineScope) {
             if (ShizukuStateMachine.get() == ShizukuStateMachine.State.STARTING) {
-                Toast.makeText(context, context.getString(R.string.toast_shizuku_already_starting), Toast.LENGTH_SHORT).show()
-                return
+                // Watchdog may have triggered a background start that stalled or failed.
+                // Cancel the worker so the manual start can take over, but leave the state
+                // alone — resetting it to STOPPED would break crash detection (setDead()
+                // only emits CRASHED from RUNNING, so a premature STOPPED means the
+                // watchdog never retries if the next attempt also fails).
+                WorkManager.getInstance(context).cancelUniqueWork("adb_start_worker")
             }
 
             context.sendBroadcast(Intent(context, NotifCancelReceiver::class.java))

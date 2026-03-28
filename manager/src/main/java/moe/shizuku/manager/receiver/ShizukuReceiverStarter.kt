@@ -122,6 +122,11 @@ object ShizukuReceiverStarter {
         try {
             ShizukuStateMachine.set(ShizukuStateMachine.State.STARTING)
             Shell.cmd(Starter.internalCommand).exec()
+            // exec() is synchronous; if the binder was never received (silent failure),
+            // state is stuck at STARTING — reset it to reflect actual state.
+            if (ShizukuStateMachine.get() == ShizukuStateMachine.State.STARTING) {
+                ShizukuStateMachine.update()
+            }
         } catch (e: Exception) {
             Log.e(AppConstants.TAG, "Failed to start Shizuku with root", e)
             ShizukuStateMachine.update()
