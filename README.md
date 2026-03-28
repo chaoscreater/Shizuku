@@ -49,7 +49,7 @@ https://github.com/user-attachments/assets/58c64ee2-05b7-4790-a353-0135d16fb63a
 
 ### Download
 You'll have to uninstall any previous Shizuku version before you install this one.
-https://github.com/chaoscreater/Shizuku/blob/master/shizuku-v13.6.0.r1349-thedjchi-release.apk
+https://github.com/chaoscreater/Shizuku/blob/master/out/apk/shizuku-v13.6.0.r1349-thedjchi-release.apk
 
 <br>
 <br>
