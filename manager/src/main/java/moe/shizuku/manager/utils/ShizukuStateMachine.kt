@@ -38,6 +38,14 @@ object ShizukuStateMachine {
         val oldState = state.getAndUpdate(transform)
         val newState = transform(oldState)
         if(oldState != newState) {
+            // A confirmed start (from any source, including outside the manager)
+            // lifts manual-stop suppression, so a later crash is auto-restarted.
+            if (newState == State.RUNNING) ShizukuSettings.setManuallyStopped(false)
+            // The launch transport is only meaningful while that launch is alive;
+            // clear it so an external restart doesn't display a stale transport.
+            if (newState == State.STOPPED || newState == State.CRASHED) {
+                ShizukuSettings.setLastAdbTransport(ShizukuSettings.ADB_TRANSPORT_UNKNOWN)
+            }
             listeners.forEach { it(newState) }
             Log.d("ShizukuStateMachine", newState.toString())
             when (newState) {

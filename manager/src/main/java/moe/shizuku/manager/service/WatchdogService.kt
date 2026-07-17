@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moe.shizuku.manager.R
 import moe.shizuku.manager.MainActivity
@@ -60,8 +61,47 @@ class WatchdogService : Service() {
      */
     private val screenOnReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_USER_PRESENT && pendingRestart) {
+            if (intent.action != Intent.ACTION_USER_PRESENT) return
+            if (pendingRestart) {
                 Log.d(TAG, "Screen unlocked with pending restart — retrying now")
+                attemptRestart()
+            } else {
+                // Self-heal on unlock: catches deaths whose CRASHED transition was
+                // never observed (e.g. the manager process was dead at the time).
+                checkServerAndRestartIfDead()
+            }
+        }
+    }
+
+    /**
+     * Event-based crash detection alone is not enough: the CRASHED transition is
+     * lost if the manager process was dead when the server died, and the state
+     * machine boots as STOPPED after every process restart. So whenever the
+     * watchdog (re)starts — and on screen unlock — probe whether the server is
+     * actually running and restart it if not, unless the user stopped it on
+     * purpose (manual stop sets the suppression flag; any start request or a
+     * confirmed RUNNING state clears it).
+     */
+    private fun checkServerAndRestartIfDead() {
+        serviceScope.launch {
+            // Grace period so a sticky binder delivered right after process
+            // start can flip the state to RUNNING before we probe it.
+            delay(BINDER_GRACE_MS)
+            if (ShizukuSettings.getManuallyStopped()) return@launch
+            when (ShizukuStateMachine.get()) {
+                // A start/stop appears to be in flight. Give it ample time to
+                // resolve (waitForBinder times out after 60s) instead of skipping
+                // outright — a state stuck at STARTING/STOPPING from a silently
+                // failed operation would otherwise disable this check forever.
+                ShizukuStateMachine.State.STARTING,
+                ShizukuStateMachine.State.STOPPING -> {
+                    delay(IN_FLIGHT_GRACE_MS)
+                    if (ShizukuSettings.getManuallyStopped()) return@launch
+                }
+                else -> Unit
+            }
+            if (ShizukuStateMachine.update() != ShizukuStateMachine.State.RUNNING) {
+                Log.d(TAG, "Server not running while watchdog active — attempting restart")
                 attemptRestart()
             }
         }
@@ -74,8 +114,11 @@ class WatchdogService : Service() {
         serviceScope.launch {
             try {
                 val tcpPort = EnvironmentUtils.getAdbTcpPort()
-                if (tcpPort > 0 && ShizukuSettings.getTcpMode()) {
-                    // Direct TCP restart — fastest path, no mDNS needed
+                if (tcpPort > 0 && ShizukuSettings.getTcpMode() && EnvironmentUtils.isUsbDebuggingEnabled()) {
+                    // Direct TCP restart — fastest path, no mDNS needed.
+                    // Classic TCP rides on the USB debugging toggle, so this path
+                    // is only used when USB debugging is already on; it is never
+                    // enabled here — wireless-only setups restart over TLS below.
                     pendingRestart = false
                     AdbStarter.startAdb(applicationContext, tcpPort)
                     Starter.waitForBinder()
@@ -131,6 +174,7 @@ class WatchdogService : Service() {
                 buildNotification()
             )
         }
+        checkServerAndRestartIfDead()
         return START_STICKY
     }
 
@@ -227,6 +271,8 @@ class WatchdogService : Service() {
 
     companion object {
         private const val TAG = "ShizukuWatchdog"
+        private const val BINDER_GRACE_MS = 3000L
+        private const val IN_FLIGHT_GRACE_MS = 90_000L
         private const val NOTIFICATION_ID_WATCHDOG = 1001
         private const val NOTIFICATION_ID_CRASH = 1002
         const val CRASH_CHANNEL_ID = "crash_reports"

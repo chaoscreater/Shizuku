@@ -62,34 +62,55 @@ class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: Vie
 
             context.sendBroadcast(Intent(context, NotifCancelReceiver::class.java))
 
+            // The user explicitly asked for a start — lift manual-stop suppression
+            ShizukuSettings.setManuallyStopped(false)
+
             val cr = context.contentResolver
+            val tcpPort = EnvironmentUtils.getAdbTcpPort()
+            val tcpMode = ShizukuSettings.getTcpMode()
+
+            if (EnvironmentUtils.isTlsSupported()) {
+                // On TLS-capable devices a start NEVER enables USB debugging.
+                // The classic TCP fast path is only taken when it is already
+                // fully usable: port open, TCP mode on, USB debugging already on.
+                val usbEnabled = Settings.Global.getInt(cr, Settings.Global.ADB_ENABLED, 0) == 1
+                if (tcpPort > 0 && tcpMode && usbEnabled) {
+                    if (context.checkSelfPermission(WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED) {
+                        // Keep the adb authorization from expiring mid-session
+                        Settings.Global.putLong(cr, "adb_allowed_connection_time", 0L)
+                    }
+                    val intent = Intent(context, StarterActivity::class.java).apply {
+                        putExtra(StarterActivity.EXTRA_PORT, tcpPort)
+                    }
+                    context.startActivity(intent)
+                    return
+                }
+
+                // Otherwise start over TLS wireless debugging. The discovery dialog
+                // (re)enables wireless debugging itself when permitted; USB debugging
+                // is left untouched.
+                if (tcpPort > 0 && !tcpMode) {
+                    // TCP mode was turned off but a port is still open — close it
+                    scope.launch {
+                        AdbStarter.stopTcp(context, tcpPort)
+                    }
+                }
+                AdbDialogFragment().show(context.asActivity<FragmentActivity>().supportFragmentManager)
+                return
+            }
+
+            // Pre-TLS devices (Android < 11 / older TVs): only classic TCP adb is
+            // available, and it rides on the USB debugging toggle.
             if (context.checkSelfPermission(WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED) {
                 Settings.Global.putInt(cr, Settings.Global.ADB_ENABLED, 1)
                 Settings.Global.putLong(cr, "adb_allowed_connection_time", 0L)
             }
-        
-            val adbEnabled = Settings.Global.getInt(cr, Settings.Global.ADB_ENABLED, 0)
-            if (adbEnabled == 0) {
+            if (Settings.Global.getInt(cr, Settings.Global.ADB_ENABLED, 0) == 0) {
                 WadbEnableUsbDebuggingDialogFragment().show(context.asActivity<FragmentActivity>().supportFragmentManager)
                 return
             }
-
-            val tcpPort = EnvironmentUtils.getAdbTcpPort()
-            val tcpMode = ShizukuSettings.getTcpMode()
-
-            // If ADB is NOT listening to a TCP port and the device doesn't support TLS, inform the user
-            if (tcpPort <= 0 && !EnvironmentUtils.isTlsSupported()) {
+            if (tcpPort <= 0) {
                 WadbNotEnabledDialogFragment().show(context.asActivity<FragmentActivity>().supportFragmentManager)
-            // If ADB IS NOT listening to a TCP port but the device supports TLS, start mDns discovery
-            } else if (tcpPort <= 0) {
-                AdbDialogFragment().show(context.asActivity<FragmentActivity>().supportFragmentManager)
-            // If ADB IS listening to a TCP port but the user wants to close it and use TLS instead, close the TCP port and start mDns discovery
-            } else if (!tcpMode) {
-                scope.launch {
-                    AdbStarter.stopTcp(context, tcpPort)
-                }
-                AdbDialogFragment().show(context.asActivity<FragmentActivity>().supportFragmentManager)
-            // Otherwise ADB IS listening to a TCP port and the user wants to keep it open. Start Shizuku via TCP
             } else {
                 val intent = Intent(context, StarterActivity::class.java).apply {
                     putExtra(StarterActivity.EXTRA_PORT, tcpPort)

@@ -185,6 +185,9 @@ abstract class HomeActivity : AppBarActivity() {
                         WatchdogService.stop(this)
                         // Cancel any pending AdbStartWorker
                         WorkManager.getInstance(this).cancelUniqueWork("adb_start_worker")
+                        // Mark the stop as intentional so the watchdog's dead-check
+                        // doesn't undo it (cleared by any start request)
+                        ShizukuSettings.setManuallyStopped(true)
                         // Stop the server if it's running
                         if (ShizukuStateMachine.isRunning()) {
                             ShizukuStateMachine.set(ShizukuStateMachine.State.STOPPING)

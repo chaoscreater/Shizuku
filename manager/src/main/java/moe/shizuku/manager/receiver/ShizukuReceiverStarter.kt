@@ -40,6 +40,9 @@ object ShizukuReceiverStarter {
     fun start(context: Context, forceStart: Boolean = false, enableWirelessDebugging: Boolean = true) {
         if ((UserHandleCompat.myUserId() > 0 || ShizukuStateMachine.isRunning()) && !forceStart) return
 
+        // Any start request means Shizuku should be running — lift manual-stop suppression
+        ShizukuSettings.setManuallyStopped(false)
+
         if (ShizukuSettings.getLastLaunchMode() == LaunchMethod.ROOT) {
             rootStart(context)
         } else if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.isTelevision() || EnvironmentUtils.getAdbTcpPort() > 0)
@@ -112,7 +115,7 @@ object ShizukuReceiverStarter {
         nm.notify(NOTIFICATION_ID, buildNotification(context, msg))
     }
 
-    private fun rootStart(context: Context) {
+    fun rootStart(context: Context) {
         if (!Shell.getShell().isRoot) {
             //NotificationHelper.notify(context, AppConstants.NOTIFICATION_ID_STATUS, AppConstants.NOTIFICATION_CHANNEL_STATUS, R.string.notification_service_start_no_root)
             Shell.getCachedShell()?.close()

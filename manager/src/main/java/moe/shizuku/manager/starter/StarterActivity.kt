@@ -24,6 +24,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import moe.shizuku.manager.AppConstants.EXTRA
 import moe.shizuku.manager.R
+import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.adb.AdbKeyException
 import moe.shizuku.manager.adb.AdbStarter
 import moe.shizuku.manager.app.AppBarActivity
@@ -122,6 +123,9 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     fun start(root: Boolean, port: Int) {
         if (started) return
         started = true
+
+        // A start is being executed — lift manual-stop suppression
+        ShizukuSettings.setManuallyStopped(false)
 
         viewModelScope.launch(handler) {
             if (root) startRoot()

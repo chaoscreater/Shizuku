@@ -4,7 +4,7 @@ An Android app that allows other apps to use system-level APIs that require ADB/
 
 ### Disclaimer
 
-This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the original version, please visit the [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) repository. This is based on his latest beta version (as of this writing) - https://github.com/thedjchi/Shizuku/releases/tag/v13.6.0.r1349-thedjchi-beta.
+This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the original version, please visit the [thedjchi/Shizuku](https://github.com/thedjchi/Shizuku) repository. This is based on his latest beta version (as of this writing) - https://github.com/thedjchi/Shizuku/releases/tag/v13.6.0.r1349-thedjchi-beta.
 
 Note that I'm not a developer. I modified it using Claude. The new features I've added are:
 

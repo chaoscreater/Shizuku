@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.SystemProperties
+import android.provider.Settings
 import moe.shizuku.manager.ShizukuApplication
 import moe.shizuku.manager.ShizukuSettings
 import com.topjohnwu.superuser.Shell
@@ -33,8 +34,17 @@ object EnvironmentUtils {
             else Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
     }
 
+    fun isUsbDebuggingEnabled(): Boolean {
+        return Settings.Global.getInt(
+            appContext.contentResolver, Settings.Global.ADB_ENABLED, 0
+        ) == 1
+    }
+
     fun isWifiRequired(): Boolean {
-        return (getAdbTcpPort() <= 0 || !ShizukuSettings.getTcpMode())
+        // The classic TCP fast path rides on the USB debugging toggle; without
+        // it (or without an open port / TCP mode) starts must go through TLS
+        // wireless debugging.
+        return (getAdbTcpPort() <= 0 || !ShizukuSettings.getTcpMode() || !isUsbDebuggingEnabled())
     }
 
     fun isRooted(): Boolean {

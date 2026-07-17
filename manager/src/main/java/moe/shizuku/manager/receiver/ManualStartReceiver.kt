@@ -10,6 +10,9 @@ class ManualStartReceiver : BroadcastReceiver() {
         val applicationId = BuildConfig.APPLICATION_ID
         if (intent.action != "${applicationId}.START") return
 
-        ShizukuReceiverStarter.start(context)
+        if (intent.getBooleanExtra("FORCE_ROOT", false))
+            ShizukuReceiverStarter.rootStart(context)
+        else
+            ShizukuReceiverStarter.start(context)
     }
 }
