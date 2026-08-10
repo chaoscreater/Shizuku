@@ -178,7 +178,7 @@ Contribute translations through the [Crowdin project](https://crowdin.com/projec
 
 ### Donations
 
-This Shizuku fork and all of its features will always be free, and there will never be ads. If you've found any of the added features to be useful, consider [donating](https://www.buymeacoffee.com/thedjchi) to help me maintain the project!
+This Shizuku fork and all of its features will always be free, and there will never be ads. If you've found any of the added features to be useful, consider [donating](https://ko-fi.com/ricky76324) to help me maintain the project!
 
 ## Background
 
