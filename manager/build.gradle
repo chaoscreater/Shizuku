@@ -16,6 +16,7 @@ android {
         applicationId = "moe.shizuku.privileged.api"
         versionCode = rootProject.ext.versionCode
         versionName = rootProject.ext.versionName
+        buildConfigField "long", "BUILD_TIME", "${System.currentTimeMillis()}L"
         externalNativeBuild {
             cmake {
                 arguments = ["-DANDROID_STL=none"]

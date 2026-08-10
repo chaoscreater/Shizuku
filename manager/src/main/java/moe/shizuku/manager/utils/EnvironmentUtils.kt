@@ -40,6 +40,12 @@ object EnvironmentUtils {
         ) == 1
     }
 
+    fun isWirelessDebuggingEnabled(): Boolean {
+        return Settings.Global.getInt(
+            appContext.contentResolver, "adb_wifi_enabled", 0
+        ) == 1
+    }
+
     fun isWifiRequired(): Boolean {
         // The classic TCP fast path rides on the USB debugging toggle; without
         // it (or without an open port / TCP mode) starts must go through TLS

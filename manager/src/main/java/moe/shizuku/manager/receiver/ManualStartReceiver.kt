@@ -13,6 +13,8 @@ class ManualStartReceiver : BroadcastReceiver() {
         if (intent.getBooleanExtra("FORCE_ROOT", false))
             ShizukuReceiverStarter.rootStart(context)
         else
-            ShizukuReceiverStarter.start(context)
+            // Broadcast is user-initiated (e.g. MacroDroid), same as the GUI Start
+            // button — don't gate on unmetered wifi like the Watchdog's auto-restart does.
+            ShizukuReceiverStarter.start(context, immediate = true)
     }
 }

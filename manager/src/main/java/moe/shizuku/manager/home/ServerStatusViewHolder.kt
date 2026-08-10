@@ -10,6 +10,7 @@ import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.databinding.HomeItemContainerBinding
 import moe.shizuku.manager.databinding.HomeServerStatusBinding
 import moe.shizuku.manager.model.ServiceStatus
+import moe.shizuku.manager.utils.EnvironmentUtils
 import rikka.html.text.HtmlCompat
 import rikka.html.text.toHtml
 import rikka.recyclerview.BaseViewHolder
@@ -30,6 +31,7 @@ class ServerStatusViewHolder(private val binding: HomeServerStatusBinding, root:
 
     private inline val textView get() = binding.text1
     private inline val summaryView get() = binding.text2
+    private inline val debugStatusView get() = binding.text3
     private inline val iconView get() = binding.icon
 
     override fun onBind() {
@@ -74,5 +76,10 @@ class ServerStatusViewHolder(private val binding: HomeServerStatusBinding, root:
         } else {
             summaryView.visibility = View.VISIBLE
         }
+
+        val usbState = if (EnvironmentUtils.isUsbDebuggingEnabled()) "True" else "False"
+        val wirelessState = if (EnvironmentUtils.isWirelessDebuggingEnabled()) "True" else "False"
+        debugStatusView.text = context.getString(R.string.home_status_usb_debugging_state, usbState) +
+            "\n" + context.getString(R.string.home_status_wireless_debugging_state, wirelessState)
     }
 }

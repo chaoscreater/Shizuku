@@ -6,44 +6,144 @@ An Android app that allows other apps to use system-level APIs that require ADB/
 
 This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the original version, please visit the [thedjchi/Shizuku](https://github.com/thedjchi/Shizuku) repository. This is based on his latest beta version (as of this writing) - https://github.com/thedjchi/Shizuku/releases/tag/v13.6.0.r1349-thedjchi-beta.
 
-Note that I'm not a developer. I modified it using Claude. The new features I've added are:
+## New features in my version
 
-- There's a weird bug or quirk with Shizuku on some Chinese devices like Xiaomi, Oppo or Lenovo (probably others as well) - where Shizuku dies when your USB protocol is File Transfer and you turn off the screen. The workaround is to set your USB protocol to charge only, but that's not ideal as it means you'd have to constantly toggle between the 2 just to get Shizuku to work well, or you'd have to setup some sort of automation with Macrodroid/Tasker to fix this. This issue should now be fixed, at least on my Lenovo tablet and Oppo phone. The only caveat is you need to keep Wireless Debugging on. For wireless debugging to be on, you do NOT need wifi to be on, as long as you use the workaround trick as described below.
-- You can now sort the authorized apps by recently added or alphabetically. You can also search for an app now. Useful if you have 60+ apps that you need to go through for whatever reason.
-- You can now toggle Watchdog service setting via intent. Useful in certain situations.
-- You can use MacroDroid's receive intent trigger to detect Shizuku's on/off status. Whenever the status is changed, MacroDroid can act on this.
+### 🔧 Shizuku stability on certain Chinese devices
 
-Action: moe.shizuku.manager.SHIZUKU_CHANGED
-<br>
-extra name: status 
-<br>
-extra value: *
+Fixes a strange Shizuku bug/quirk affecting some Chinese devices, including **Xiaomi, OPPO, Lenovo**, and potentially others.
 
-<br>
+On affected devices, Shizuku would die when:
 
-- You can use MacroDroid's receive intent trigger to detect Watchdog's on/off status. Whenever the status is changed, MacroDroid can act on this.
+* USB mode was set to **File Transfer**, and
+* the device screen was turned off.
 
-Action: moe.shizuku.privileged.api.WATCHDOG_CHANGED 
-<br>
-extra name: status 
-<br>
-extra value: *
+Previously, the workaround was to change the USB mode to **Charge Only**. This wasn't ideal because you'd have to constantly switch between USB modes, or create a MacroDroid/Tasker automation to do it.
+
+This issue should now be fixed, at least on my **Lenovo tablet and OPPO phone**.
+
+**Caveat:** Wireless Debugging must remain enabled.
+
+> **Note:** Wireless Debugging does **not** require Wi-Fi to be connected to a network. The workaround described below can be used to keep Wireless Debugging enabled even when Wi-Fi isn't available.
+
+---
+
+### 📱 Start Shizuku without USB Debugging or an active Wi-Fi connection
+
+Shizuku can now start with:
+
+* ✅ USB Debugging **OFF**
+* ✅ No Wi-Fi network connection
+* ✅ No PC or USB connection
+* ✅ Wireless Debugging **ON**
+
+Wireless Debugging can be forced on using the workaround method described by **thedjchi#165**.
+
+This makes Shizuku significantly more useful on **non-rooted devices**.
+
+#### Example use case
+
+After restarting your phone, imagine that:
+
+* There are no available Wi-Fi networks to connect to, or
+* You can't connect to a Wi-Fi network for whatever reason.
+
+You can still start Shizuku **without USB Debugging and without connecting to a PC**.
+
+It also allows you to keep USB Debugging disabled when an app requires it to be off, while continuing to use apps that depend on Shizuku.
+
+For example:
+
+**USB Debugging OFF**
+→ Apps that refuse to run when USB Debugging is enabled can work normally.
+
+**Shizuku RUNNING**
+→ Apps such as **Hail** can still use Shizuku to enable/disable apps.
+
+Both can therefore work **simultaneously**.
+
+This is particularly useful for apps such as **Microsoft Teams**, where Company Portal may check whether USB Debugging is enabled.
+
+---
+
+### 🔎 Search and sort authorized apps
+
+The authorized-apps list can now be:
+
+* Sorted **alphabetically**
+* Sorted by **recently added**
+* **Searched**
+
+This is particularly useful if you have **60+ authorized apps** and need to find or review a specific app.
+
+---
+
+### ⚙️ Toggle Watchdog via Intent
+
+The **Watchdog service** can now be enabled or disabled through an Intent.
+
+This makes it possible to control Watchdog from automation apps such as MacroDroid or Tasker.
+
+---
+
+### 🤖 Detect Shizuku status changes with MacroDroid
+
+MacroDroid can listen for Shizuku status changes using its **Receive Intent** trigger.
+
+Whenever Shizuku is turned on or off, MacroDroid can react accordingly.
+
+**Intent action:**
+
+```text
+moe.shizuku.manager.SHIZUKU_CHANGED
+```
+
+**Extra name:**
+
+```text
+status
+```
+
+**Extra value:**
+
+```text
+*
+```
+
+This can be used to trigger other actions whenever Shizuku's status changes.
+
+---
+
+### 🐶 Detect Watchdog status changes with MacroDroid
+
+MacroDroid can also listen for Watchdog status changes.
+
+**Intent action:**
+
+```text
+moe.shizuku.privileged.api.WATCHDOG_CHANGED
+```
+
+**Extra name:**
+
+```text
+status
+```
+
+**Extra value:**
+
+```text
+*
+```
+
+This allows automations to react whenever Watchdog is enabled or disabled.
 
 https://imgur.com/3ialiio
-<br>
 
-- Allows Shizuku service to start without having USB Debugging on AND without wifi connected to any network. It just needs wireless debugging on, which you can force using a workaround method (https://github.com/thedjchi/Shizuku/issues/165). What does this mean? It means on a non-rooted phone, if you restarted your phone and you can't find any Wifi SSIDs to connect to, or you just can't connect to a network for whatever reason, you can still start Shizuku AND without having to use USB Debugging, without tethering to any PC. It also means you can have USB Debugging off (for some apps, this is required in order to run), while still able to use apps that rely on Shizuku - for example Hail for enabling/disabling apps. 
+---
 
-This also means that if you have apps that can't run if USB Debugging is enabled (e.g. Microsoft Teams, which rely on Company Portal, which checks your device for root and whether you have USB Debugging enabled), you can now run those apps. At the same time, you can run Shizuku related apps (e.g. you can use Hail with Shizuku to enable/disable apps). Both these situations can happen concurrently, which is great.
+For a demo of the wireless debugging workaround, see the recording below:
 
-<br>
-<br>
-
-For a demo of this, see the recording below:
-
-https://github.com/user-attachments/assets/9a1b6cc1-d660-447b-bd36-5842e691d7fd
-
-https://github.com/user-attachments/assets/58c64ee2-05b7-4790-a353-0135d16fb63a
+https://github.com/user-attachments/assets/019d6d2c-582b-4f82-bac0-20a9ad40d09d
 
 <br>
 

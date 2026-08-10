@@ -37,7 +37,7 @@ object ShizukuReceiverStarter {
         STOPPED
     }
 
-    fun start(context: Context, forceStart: Boolean = false, enableWirelessDebugging: Boolean = true) {
+    fun start(context: Context, forceStart: Boolean = false, enableWirelessDebugging: Boolean = true, immediate: Boolean = false) {
         if ((UserHandleCompat.myUserId() > 0 || ShizukuStateMachine.isRunning()) && !forceStart) return
 
         // Any start request means Shizuku should be running — lift manual-stop suppression
@@ -48,8 +48,8 @@ object ShizukuReceiverStarter {
         } else if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.isTelevision() || EnvironmentUtils.getAdbTcpPort() > 0)
             && ShizukuSettings.getLastLaunchMode() == LaunchMethod.ADB) {
                 if (context.checkSelfPermission(WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED) {
-                    AdbStartWorker.enqueue(context, enableWirelessDebugging)
-                    updateNotification(context, WorkerState.AWAITING_WIFI)
+                    AdbStartWorker.enqueue(context, enableWirelessDebugging, immediate)
+                    updateNotification(context, if (immediate) WorkerState.RUNNING else WorkerState.AWAITING_WIFI)
                 } else {
                     showPermissionErrorNotification(context)
                 }

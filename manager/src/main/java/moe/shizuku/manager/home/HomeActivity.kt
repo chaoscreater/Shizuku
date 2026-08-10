@@ -8,14 +8,20 @@ import android.os.Bundle
 import android.os.Process
 import android.text.method.LinkMovementMethod
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
 import androidx.activity.viewModels
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.Toolbar
+import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import moe.shizuku.manager.BuildConfig
 import moe.shizuku.manager.R
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.adb.AdbPairingService
@@ -33,6 +39,8 @@ import moe.shizuku.manager.utils.SettingsHelper
 import moe.shizuku.manager.service.WatchdogService
 import moe.shizuku.manager.utils.ShizukuStateMachine
 import androidx.work.WorkManager
+import java.text.DateFormat
+import java.util.Date
 import rikka.core.content.asActivity
 import rikka.core.ktx.unsafeLazy
 import rikka.lifecycle.Status
@@ -105,10 +113,18 @@ abstract class HomeActivity : AppBarActivity() {
         recyclerView.addEdgeSpacing(top = edgeSpacingV, bottom = edgeSpacingV, left = edgeSpacingH, right = edgeSpacingH)
 
         ShizukuStateMachine.addListener(stateListener)
+
+        // onNewIntent only fires when an instance is already running; handle a
+        // cold start (e.g. launched fresh by an external Send Intent) here too.
+        handleIntentExtras(intent)
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        handleIntentExtras(intent)
+    }
+
+    private fun handleIntentExtras(intent: Intent?) {
         intent?.let {
             val showDialog = it.getBooleanExtra(HomeActivity.EXTRA_SHOW_PAIRING_DIALOG, false)
             if (showDialog) showAccessibilityDialog()
@@ -124,8 +140,53 @@ abstract class HomeActivity : AppBarActivity() {
 
     override fun onResume() {
         super.onResume()
+        updateAppBarTitle()
         checkServerStatus()
         appsModel.load()
+    }
+
+    private var appBarTitleView: TextView? = null
+
+    /**
+     * Personalized app bar title, showing the date this build was compiled
+     * (BuildConfig.BUILD_TIME), not the current date. Re-applied on every
+     * resume, but the date itself only changes when a new build is installed.
+     *
+     * The toolbar's built-in title view can only ellipsize long text, and its
+     * width changes after the menu icons are inflated. So the built-in title is
+     * hidden and replaced with a custom TextView that fills the space left of
+     * the menu icons and auto-sizes its text (20sp down to a 10sp floor) —
+     * re-fitting automatically on every layout change.
+     */
+    private fun updateAppBarTitle() {
+        val newTitle = "${getString(R.string.app_name)} - modified by Ricky - ${
+            DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(BuildConfig.BUILD_TIME))
+        }"
+        title = newTitle
+
+        val titleView = appBarTitleView ?: run {
+            val toolbar = findViewById<Toolbar>(R.id.toolbar) ?: return
+            supportActionBar?.setDisplayShowTitleEnabled(false)
+            AppCompatTextView(toolbar.context).apply {
+                TextViewCompat.setTextAppearance(
+                    this, R.style.TextAppearance_MaterialComponents_Headline6
+                )
+                maxLines = 1
+                gravity = Gravity.CENTER_VERTICAL
+                TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                    this, 10, 20, 1, TypedValue.COMPLEX_UNIT_SP
+                )
+                toolbar.addView(
+                    this,
+                    Toolbar.LayoutParams(
+                        Toolbar.LayoutParams.MATCH_PARENT,
+                        Toolbar.LayoutParams.MATCH_PARENT
+                    )
+                )
+                appBarTitleView = this
+            }
+        }
+        titleView.text = newTitle
     }
 
     override fun onPause() {

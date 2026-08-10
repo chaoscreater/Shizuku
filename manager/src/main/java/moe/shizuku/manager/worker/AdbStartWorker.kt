@@ -236,9 +236,13 @@ class AdbStartWorker(context: Context, params: WorkerParameters) : CoroutineWork
     companion object {
         const val KEY_ENABLE_WIFI = "enable_wifi"
 
-        fun enqueue(context: Context, enableWirelessDebugging: Boolean = true) {
+        fun enqueue(context: Context, enableWirelessDebugging: Boolean = true, immediate: Boolean = false) {
             val cb = Constraints.Builder()
-            if (EnvironmentUtils.isWifiRequired())
+            // `immediate` is for user-initiated starts (manual broadcast, GUI button):
+            // they shouldn't wait on unmetered wifi like the Watchdog's unattended
+            // auto-restarts do — the discovery flow below works fine without any
+            // network connection (e.g. wireless debugging enabled via ADB without wifi).
+            if (EnvironmentUtils.isWifiRequired() && !immediate)
                 cb.setRequiredNetworkType(NetworkType.UNMETERED)
             val constraints = cb.build()
 

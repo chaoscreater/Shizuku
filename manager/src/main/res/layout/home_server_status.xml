@@ -33,6 +33,14 @@
             android:layout_height="wrap_content"
             android:duplicateParentState="true" />
 
+        <TextView
+            android:id="@+id/text3"
+            style="@style/CardSummary.Brief"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            tools:text="USB Debugging: True\nWireless Debugging: True" />
+
     </LinearLayout>
 
 </LinearLayout>
