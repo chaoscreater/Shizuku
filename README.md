@@ -137,7 +137,7 @@ This can be used to trigger other actions whenever Shizuku's status changes.
 
 ---
 
-### 🐶 Detect Watchdog status changes with MacroDroid
+### 6. 🐶 Detect Watchdog status changes with MacroDroid
 
 MacroDroid can also listen for Watchdog status changes.
 
