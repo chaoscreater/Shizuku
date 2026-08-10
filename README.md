@@ -8,7 +8,7 @@ This is a **FORK** of thedjchi's fork of Shizuku. If you are looking for the ori
 
 ## New features in my version
 
-### 🔧 Shizuku stability on certain Chinese devices
+### 1. 🔧 Shizuku stability on certain Chinese devices
 
 Fixes a strange Shizuku bug/quirk affecting some Chinese devices, including **Xiaomi, OPPO, Lenovo**, and potentially others.
 
@@ -27,7 +27,7 @@ This issue should now be fixed, at least on my **Lenovo tablet and OPPO phone**.
 
 ---
 
-### 📱 Start Shizuku without USB Debugging or an active Wi-Fi connection
+### 2. 📱 Start Shizuku without USB Debugging or an active Wi-Fi connection
 
 Shizuku can now start with:
 
@@ -89,7 +89,7 @@ This is particularly useful for apps such as **Microsoft Teams**, where Company 
 
 ---
 
-### 🔎 Search and sort authorized apps
+### 3. 🔎 Search and sort authorized apps
 
 The authorized-apps list can now be:
 
@@ -101,7 +101,7 @@ This is particularly useful if you have **60+ authorized apps** and need to find
 
 ---
 
-### ⚙️ Toggle Watchdog via Intent
+### 4. ⚙️ Toggle Watchdog via Intent
 
 The **Watchdog service** can now be enabled or disabled through an Intent.
 
@@ -109,7 +109,7 @@ This makes it possible to control Watchdog from automation apps such as MacroDro
 
 ---
 
-### 🤖 Detect Shizuku status changes with MacroDroid
+### 5. 🤖 Detect Shizuku status changes with MacroDroid
 
 MacroDroid can listen for Shizuku status changes using its **Receive Intent** trigger.
 
