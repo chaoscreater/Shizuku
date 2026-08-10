@@ -19,7 +19,7 @@ On affected devices, Shizuku would die when:
 
 Previously, the workaround was to change the USB mode to **Charge Only**. This wasn't ideal because you'd have to constantly switch between USB modes, or create a MacroDroid/Tasker automation to do it.
 
-This issue should now be fixed, at least on my **Lenovo tablet and OPPO phone**.
+This issue should now be fixed, at least on my **Lenovo tablet and OPPO phone**. However, changing between **Charge Only** and **File Transfer** mode could have an impact for another feature described below.
 
 **Caveat:** Wireless Debugging must remain enabled.
 
@@ -36,11 +36,35 @@ Shizuku can now start with:
 * ✅ No PC or USB connection
 * ✅ Wireless Debugging **ON**
 
-Wireless Debugging can be forced on using the workaround method described by **thedjchi#165**.
+Wireless Debugging can be forced on using the workaround described in [Shizuku issue #165](https://github.com/thedjchi/Shizuku/issues/165). You can also refer to the demo video below for a better understanding of how the workaround works.
 
-This makes Shizuku significantly more useful on **non-rooted devices**.
+**Important caveat:** Android will kill the Shizuku process if you switch the USB connection mode—for example, from **Charge Only** to **File Transfer**. More importantly, doing so also **undoes the Wireless Debugging workaround** demonstrated in the video.
 
-#### Example use case
+This means that after switching to **File Transfer**:
+
+* Shizuku will be stopped. But it will be started automatically as long as your WiFi is still connected to a SSID. It will start Shizuku using Wireless Debugging mode. OR, if you have USB Debugging enabled, it will use that to start Shizuku instead. Shizuku will prioritize starting with USB Debugging over starting with Wireless Debugging.
+* The Wireless Debugging workaround will be reverted.
+* If you subsequently turn off Wi-Fi, Wireless Debugging will become disabled again.
+* You won't be able to re-enable Wireless Debugging unless you either:
+
+  * Turn Wi-Fi back on and connect to a Wi-Fi network/SSID, or
+  * Re-apply the workaround shown in the video.
+
+### Recommended Setup
+
+The easiest way to avoid this issue is to keep the USB connection mode set to **Charge Only** and use alternative methods for transferring files or accessing your device.
+
+For example:
+
+* **ADB** — for file transfers and remote access via `scrcpy`
+* **HTTP/FTP servers** — for quick file transfers between your phone and PC
+* Other network-based file-transfer solutions
+
+There are plenty of alternatives, so you don't necessarily need to switch the USB mode to **File Transfer**.
+
+Personally, I rarely use USB File Transfer, so this isn't much of an issue for me. And if you do need it, you can always fall back to the standard **USB Debugging** method to start Shizuku again.
+
+#### Example use case for Starting Shizuku without USB Debugging or an active Wi-Fi connection
 
 After restarting your phone, imagine that:
 
