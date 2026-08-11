@@ -35,10 +35,13 @@ Shizuku can now start with:
 * ✅ No Wi-Fi network connection
 * ✅ No PC or USB connection
 * ✅ Wireless Debugging **ON**
+* ✅ Does NOT kill Wireless Debugging (adb_wifi_enabled). Other versions of Shizuku will/may do this. Mine doesn't. However, this doesn't mean Wireless Debugging won't be killed by Android System itself, I have no control over that.
 
 Wireless Debugging can be forced on using the workaround described in [Shizuku issue #165](https://github.com/thedjchi/Shizuku/issues/165). You can also refer to the demo video below for a better understanding of how the workaround works.
 
-**Important caveat:** Android will kill the Shizuku process if you switch the USB connection mode—for example, from **Charge Only** to **File Transfer**. More importantly, doing so also **undoes the Wireless Debugging workaround** demonstrated in the video.
+**Important caveat:** Android will kill the Shizuku process in certain scenarios for certain phones. This is outside of Shizuku's control and there isn't much I can do about it. In my case, I can leave my phone overnight and Shizuku will still be running happily using Wireless Debugging mode. My Wireless Debugging stays on and doesn't get killed. This is on Galaxy Z Fold 7 with A16 OneUI 8.0.
+
+As an example, Shizuku will be stopped if you switch the USB connection mode from **Charge Only** to **File Transfer**. More importantly, doing so also **undoes the Wireless Debugging workaround** demonstrated in the video below.
 
 This means that after switching to **File Transfer**:
 
